@@ -2,53 +2,46 @@ package main
 
 import (
 	"fmt"
-	"os"
 
-	"github.com/spf13/cobra"
+	"github.com/AlecAivazis/survey/v2"
 )
 
-var Verbose bool
-var Source string
-
-var rootCmd = &cobra.Command{
-	Use:              "recipie [OPTIONS] [COMMANDS]",
-	TraverseChildren: true,
-	Short:            "Recipe CLI to handle multiple recipies and generate shopping list for a week or two",
-}
-
-var versionCmd = &cobra.Command{
-	Use:   "version",
-	Short: "Print the version number of Recipie",
-	Long:  `All software has versions. This is Recipie's`,
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("Recipe v0.1.0 %s", args[0])
+// the questions to ask
+var qs = []*survey.Question{
+	{
+		Name:      "name",
+		Prompt:    &survey.Input{Message: "What is your name?"},
+		Validate:  survey.Required,
+		Transform: survey.Title,
 	},
-}
-
-var ingredientCmd = &cobra.Command{
-	Use:   "ingredient",
-	Short: "manage ingredients",
-	Long:  `add, modify or remove an ingredient`,
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("Ingredient %s", args[0])
+	{
+		Name: "color",
+		Prompt: &survey.Select{
+			Message: "Choose a color:",
+			Options: []string{"red", "blue", "green"},
+			Default: "red",
+		},
 	},
-}
-
-func Init() {
-	rootCmd.AddCommand(versionCmd)
-	rootCmd.AddCommand(ingredientCmd)
-	ingredientCmd.PersistentFlags().StringP("name", "n", "Ingredient name", "")
-	ingredientCmd.MarkFlagRequired("name")
-
-}
-
-func Execute() {
-	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+	{
+		Name:   "age",
+		Prompt: &survey.Input{Message: "How old are you?"},
+	},
 }
 
 func main() {
-	Execute()
+	// the answers will be written to this struct
+	answers := struct {
+		Name          string // survey will match the question and field names
+		FavoriteColor string `survey:"color"` // or you can tag fields to match a specific name
+		Age           int    // if the types don't match, survey will convert it
+	}{}
+
+	// perform the questions
+	err := survey.Ask(qs, &answers)
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+
+	fmt.Printf("%s chose %s.", answers.Name, answers.FavoriteColor)
 }
