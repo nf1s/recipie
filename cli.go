@@ -28,7 +28,7 @@ func input(message string) string {
 	return name
 }
 
-func ingredient() int {
+func addIngredients() int {
 	var qs = []*survey.Question{
 		{
 			Name:      "name",
@@ -61,14 +61,14 @@ func ingredient() int {
 
 	isAddMore := confirm("add more?")
 	if isAddMore {
-		ingredient()
+		addIngredients()
 	}
 
 	return 1
 
 }
 
-func recipe() string {
+func mainOptions() string {
 	choice := ""
 	prompt := &survey.Select{
 		Message: "Choose an option:",
@@ -84,14 +84,18 @@ func recipe() string {
 	return choice
 }
 
+func createRecipe() {
+	fmt.Println("create a new recipie")
+	recipeName := input("what is the recipe's name?")
+	fmt.Printf("recipe name: %s", recipeName)
+}
+
 func cli() int {
-	choice := recipe()
+	choice := mainOptions()
 	switch choice {
 	case CREATE_RECIPE:
-		fmt.Println("create")
-		recipeName := input("what is the recipe's name?")
-		fmt.Printf("recipe name: %s", recipeName)
-		ingredient()
+		createRecipe()
+		addIngredients()
 		return cli()
 	case LIST_RECIPIES:
 		fmt.Println("list")
