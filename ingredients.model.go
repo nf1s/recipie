@@ -5,13 +5,6 @@ import (
 	"log"
 )
 
-type Ingredient struct {
-	name          string
-	recipeId      string
-	count         int
-	weightInGrams int
-}
-
 var ingredientsTable string = `CREATE TABLE ingredients (
   "name" TEXT NOT NULL,
   "recipeId" integer NOT NULL,
@@ -21,44 +14,59 @@ var ingredientsTable string = `CREATE TABLE ingredients (
    FOREIGN KEY (recipeId) REFERENCES recipes(id)
   );`
 
-func createIngredientsTable(db *sql.DB) {
+type Ingredient struct {
+	name          string
+	recipeId      string
+	count         int
+	weightInGrams int
+}
+
+type IngredientRepository interface {
+	CreateIngredientsTable()
+	Get(name string) *sql.Row
+	Insert(name string, recipeId string, count int, weightInGrams int) *Ingredient
+}
+
+type ingredientRepository struct {
+	DB *sql.DB
+}
+
+func NewIngredientRepository(db *sql.DB) IngredientRepository {
+	return &ingredientRepository{DB: db}
+}
+func (i *ingredientRepository) CreateIngredientsTable() {
 	log.Printf("Create ingredients table...")
-	statement, err := db.Prepare(ingredientsTable) // Prepare SQL Statement
+	statement, err := i.DB.Prepare(ingredientsTable)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	statement.Exec() // Execute SQL Statements
+	statement.Exec()
 	log.Println("ingredients table created")
 
 }
 
-func (i Ingredient) create(db *sql.DB, name, recipeId string, count, weightInGrams int) *Ingredient {
-	ing := &Ingredient{name: name, recipeId: recipeId, count: count, weightInGrams: weightInGrams}
-	ing.insert(db)
-	return ing
-}
-
-func (i *Ingredient) insert(db *sql.DB) {
+func (i *ingredientRepository) Insert(name string, recipeId string, count int, weightInGrams int) *Ingredient {
+	ing := Ingredient{name: name, recipeId: recipeId, count: count, weightInGrams: weightInGrams}
 	log.Println("Inserting ingredient record ...")
 	insertStudentSQL := `INSERT INTO ingredients (name, recipeId, count, weightInGrams)  VALUES (?, ?, ?, ?)`
-	statement, err := db.Prepare(insertStudentSQL) // Prepare statement.
+	statement, err := i.DB.Prepare(insertStudentSQL)
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
-	_, err = statement.Exec(i.name, i.recipeId, i.count, i.weightInGrams)
+	_, err = statement.Exec(&ing.name, &ing.recipeId, &ing.count, &ing.weightInGrams)
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
+	return &ing
 }
 
-func (i *Ingredient) display(db *sql.DB) {
-	row, err := db.Query("SELECT * FROM ingredients Where name=?", i.name)
+func (i *ingredientRepository) Get(name string) *sql.Row {
+	var ing Ingredient
+	row := i.DB.QueryRow("SELECT * FROM ingredients Where name=?", ing.name)
+	err := row.Scan(&ing.name, &ing.recipeId)
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer row.Close()
-	for row.Next() { // Iterate and fetch the records from result cursor
-		row.Scan(&i.name, &i.recipeId)
-		log.Printf("Ingredient: %s %s %d %d", i.name, i.recipeId, i.count, i.weightInGrams)
-	}
+	return row
+
 }

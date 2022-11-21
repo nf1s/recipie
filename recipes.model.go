@@ -8,19 +8,35 @@ import (
 	"github.com/google/uuid"
 )
 
-type Recipe struct {
-	id   string
-	name string
-}
-
 var recipesTable string = `CREATE TABLE recipes (
   "id" TEXT NOT NULL PRIMARY KEY,
   "name" TEXT
   );`
 
-func createRecipesTable(db *sql.DB) {
+type Recipe struct {
+	id   string
+	name string
+}
+
+type RecipeRepository interface {
+	CreateRecipesTable()
+	Insert(name string) *Recipe
+	ListRecipes() *sql.Rows
+	Get(id string) *sql.Row
+	GetFullRecipe(id string) *sql.Row
+}
+
+type recipeRepository struct {
+	DB *sql.DB
+}
+
+func NewRecipeRepository(db *sql.DB) RecipeRepository {
+	return &recipeRepository{DB: db}
+}
+
+func (r *recipeRepository) CreateRecipesTable() {
 	log.Printf("Create recipes table...")
-	statement, err := db.Prepare(recipesTable)
+	statement, err := r.DB.Prepare(recipesTable)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -29,43 +45,58 @@ func createRecipesTable(db *sql.DB) {
 
 }
 
-func (r *Recipe) insert(db *sql.DB) *Recipe {
-	r.id = fmt.Sprintf("%s", uuid.New())
+func (r *recipeRepository) ListRecipes() *sql.Rows {
+	var recipe Recipe
+	row, err := r.DB.Query("SELECT * FROM recipes")
+	if err != nil {
+		log.Fatalln(err.Error())
+	}
+	defer row.Close()
+	for row.Next() {
+		row.Scan(&recipe.id, &recipe.name)
+		if err != nil {
+			log.Fatalln(err.Error())
+		}
+
+	}
+	return row
+
+}
+
+func (r *recipeRepository) Insert(name string) *Recipe {
+	recipe := Recipe{id: fmt.Sprintf("%s", uuid.New()), name: name}
 	log.Println("Inserting recipe record ...")
 	insertStudentSQL := `INSERT INTO recipes (id, name)  VALUES (?,?)`
-	statement, err := db.Prepare(insertStudentSQL)
+	statement, err := r.DB.Prepare(insertStudentSQL)
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
-	_, err = statement.Exec(r.id, r.name)
+	_, err = statement.Exec(&recipe.id, &recipe.name)
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
-	return r
+	return &recipe
 }
 
-func (r *Recipe) display(db *sql.DB) {
-	row, err := db.Query("SELECT * FROM recipes WHERE id=?", r.id)
+func (r *recipeRepository) Get(id string) *sql.Row {
+	var recipe Recipe
+	row := r.DB.QueryRow("SELECT * FROM recipes WHERE id=?", id)
+	err := row.Scan(&recipe.id, &recipe.name)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalln(err.Error())
 	}
-	defer row.Close()
-	for row.Next() {
-		row.Scan(&r.id, &r.name)
-		log.Printf("Recipe: %s %s", r.id, r.name)
+	return row
 
-	}
 }
 
-func (r *Recipe) getFullRecipe(db *sql.DB) {
-	row, err := db.Query("SELECT * FROM recipes JOIN ingredients on recipes.id=ingredients.recipeId WHERE recipes.id=?", r.id)
+func (r *recipeRepository) GetFullRecipe(id string) *sql.Row {
+	var recipe Recipe
+	row := r.DB.QueryRow("SELECT * FROM recipes JOIN ingredients on recipes.id=ingredients.recipeId WHERE recipes.id=?", id)
+	err := row.Scan(&recipe.id, &recipe.name)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalln(err.Error())
 	}
-	defer row.Close()
-	for row.Next() {
-		row.Scan(&r.id, &r.name)
-		log.Printf("Recipe: %s %s", r.id, r.name)
 
-	}
+	return row
+
 }
