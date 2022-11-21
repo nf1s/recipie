@@ -22,20 +22,18 @@ func InitDB() {
 	db, _ := sql.Open("sqlite3", "./sqlite.db")
 	defer db.Close()
 
-	createRecipesTable(db)
-	createIngredientsTable(db)
+	r := NewRecipeRepository(db)
+	r.CreateRecipesTable()
+	i := NewIngredientRepository(db)
+	i.CreateIngredientsTable()
 
-	salmonAndPotatoes := Recipe{name: "Salmon and potatoes"}
-	salmonAndPotatoes.insert(db)
+	salmonAndPotatoes := r.Insert("Salmon and Potatoes")
 
-	potatoes := Ingredient{name: "Potatoes", count: 4, recipeId: salmonAndPotatoes.id}
-	potatoes.insert(db)
+	potatoes := i.Insert("Potatoes", salmonAndPotatoes.id, 10, 0)
 
-	Salmon := Ingredient{name: "Salmon", weightInGrams: 500, recipeId: salmonAndPotatoes.id}
-	Salmon.insert(db)
+	salmon := i.Insert("Salmon", salmonAndPotatoes.id, 0, 500)
 
-	salmonAndPotatoes.display(db)
-	potatoes.display(db)
-	Salmon.display(db)
-
+	r.Get(salmonAndPotatoes.id)
+	r.Get(potatoes.name)
+	r.Get(salmon.name)
 }
