@@ -1,4 +1,4 @@
-package main
+package cli
 
 import (
 	"fmt"
@@ -15,24 +15,6 @@ var EXIT = "exit"
 type CLI struct {
 	Recipe     repo.RecipeRepository
 	Ingredient repo.IngredientRepository
-}
-
-func confirm(message string) bool {
-	condition := false
-	prompt := &survey.Confirm{
-		Message: message,
-	}
-	survey.AskOne(prompt, &condition)
-	return condition
-
-}
-func input(message string) string {
-	var name string
-	prompt := &survey.Input{
-		Message: message,
-	}
-	survey.AskOne(prompt, &name)
-	return name
 }
 
 func (cli *CLI) addIngredients(recipeId string) bool {
@@ -113,6 +95,6 @@ func (cli *CLI) Start() bool {
 	case EXIT:
 		return true
 	default:
-		return true
+		return cli.Start()
 	}
 }
