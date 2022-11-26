@@ -8,8 +8,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func InitDB() *sql.DB {
-	os.Remove("sqlite.db")
+func createDB() {
 
 	log.Println("Creating sqlite.db...")
 	file, err := os.Create("sqlite.db")
@@ -19,7 +18,16 @@ func InitDB() *sql.DB {
 	file.Close()
 	log.Println("sqlite.db created")
 
-	db, _ := sql.Open("sqlite3", "./sqlite.db")
+}
+
+func InitDB() *sql.DB {
+
+	db, err := sql.Open("sqlite3", "./sqlite.db")
+
+	if os.IsNotExist(err) {
+		createDB()
+	}
+
 	return db
 
 }

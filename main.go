@@ -1,6 +1,9 @@
 package main
 
-import repo "recipie/repo"
+import (
+	cli "recipie/cli"
+	repo "recipie/repo"
+)
 
 func main() {
 	db := InitDB()
@@ -12,6 +15,6 @@ func main() {
 	recipe.CreateRecipesTable()
 	ingredient.CreateIngredientsTable()
 
-	cli := CLI{Recipe: recipe, Ingredient: ingredient}
+	cli := cli.CLI{Recipe: recipe, Ingredient: ingredient}
 	cli.Start()
 }
