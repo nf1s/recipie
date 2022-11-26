@@ -1,4 +1,4 @@
-package main
+package repo
 
 import (
 	"database/sql"
@@ -14,8 +14,8 @@ var recipesTable string = `CREATE TABLE recipes (
   );`
 
 type Recipe struct {
-	id   string
-	name string
+	Id   string
+	Name string
 }
 
 type RecipeRepository interface {
@@ -53,7 +53,7 @@ func (r *recipeRepository) ListRecipes() *sql.Rows {
 	}
 	defer row.Close()
 	for row.Next() {
-		row.Scan(&recipe.id, &recipe.name)
+		row.Scan(&recipe.Id, &recipe.Name)
 		if err != nil {
 			log.Fatalln(err.Error())
 		}
@@ -64,14 +64,14 @@ func (r *recipeRepository) ListRecipes() *sql.Rows {
 }
 
 func (r *recipeRepository) Insert(name string) *Recipe {
-	recipe := Recipe{id: fmt.Sprintf("%s", uuid.New()), name: name}
+	recipe := Recipe{Id: fmt.Sprintf("%s", uuid.New()), Name: name}
 	log.Println("Inserting recipe record ...")
 	insertStudentSQL := `INSERT INTO recipes (id, name)  VALUES (?,?)`
 	statement, err := r.DB.Prepare(insertStudentSQL)
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
-	_, err = statement.Exec(&recipe.id, &recipe.name)
+	_, err = statement.Exec(&recipe.Id, &recipe.Name)
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
@@ -81,7 +81,7 @@ func (r *recipeRepository) Insert(name string) *Recipe {
 func (r *recipeRepository) Get(id string) *sql.Row {
 	var recipe Recipe
 	row := r.DB.QueryRow("SELECT * FROM recipes WHERE id=?", id)
-	err := row.Scan(&recipe.id, &recipe.name)
+	err := row.Scan(&recipe.Id, &recipe.Name)
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
@@ -92,7 +92,7 @@ func (r *recipeRepository) Get(id string) *sql.Row {
 func (r *recipeRepository) GetFullRecipe(id string) *sql.Row {
 	var recipe Recipe
 	row := r.DB.QueryRow("SELECT * FROM recipes JOIN ingredients on recipes.id=ingredients.recipeId WHERE recipes.id=?", id)
-	err := row.Scan(&recipe.id, &recipe.name)
+	err := row.Scan(&recipe.Id, &recipe.Name)
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
