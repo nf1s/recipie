@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 )
 
-var recipesTable string = `CREATE TABLE recipes (
+var recipesTable string = `CREATE TABLE IF NOT EXISTS recipes(
   "id" TEXT NOT NULL PRIMARY KEY,
   "name" TEXT
   );`

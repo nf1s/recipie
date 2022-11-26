@@ -5,7 +5,7 @@ import (
 	"log"
 )
 
-var ingredientsTable string = `CREATE TABLE ingredients (
+var ingredientsTable string = `CREATE TABLE IF NOT EXISTS ingredients(
   "name" TEXT NOT NULL,
   "recipeId" integer NOT NULL,
   "count" integer,
