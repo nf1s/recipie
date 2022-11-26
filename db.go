@@ -8,7 +8,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func InitDB() {
+func InitDB() *sql.DB {
 	os.Remove("sqlite.db")
 
 	log.Println("Creating sqlite.db...")
@@ -20,20 +20,6 @@ func InitDB() {
 	log.Println("sqlite.db created")
 
 	db, _ := sql.Open("sqlite3", "./sqlite.db")
-	defer db.Close()
+	return db
 
-	r := NewRecipeRepository(db)
-	r.CreateRecipesTable()
-	i := NewIngredientRepository(db)
-	i.CreateIngredientsTable()
-
-	salmonAndPotatoes := r.Insert("Salmon and Potatoes")
-
-	potatoes := i.Insert("Potatoes", salmonAndPotatoes.id, 10, 0)
-
-	salmon := i.Insert("Salmon", salmonAndPotatoes.id, 0, 500)
-
-	r.Get(salmonAndPotatoes.id)
-	r.Get(potatoes.name)
-	r.Get(salmon.name)
 }
