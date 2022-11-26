@@ -3,12 +3,19 @@ package main
 import (
 	"fmt"
 
+	repo "recipie/repo"
+
 	"github.com/AlecAivazis/survey/v2"
 )
 
 var CREATE_RECIPE = "Create a Recipe"
 var LIST_RECIPIES = "List Recipes"
 var EXIT = "exit"
+
+type CLI struct {
+	Recipe     repo.RecipeRepository
+	Ingredient repo.IngredientRepository
+}
 
 func confirm(message string) bool {
 	condition := false
@@ -28,7 +35,7 @@ func input(message string) string {
 	return name
 }
 
-func addIngredients() int {
+func (cli *CLI) addIngredients(recipeId string) bool {
 	var qs = []*survey.Question{
 		{
 			Name:      "name",
@@ -55,20 +62,21 @@ func addIngredients() int {
 	err := survey.Ask(qs, &answers)
 	if err != nil {
 		fmt.Println(err.Error())
-		return 0
+		return false
 	}
 	fmt.Printf("name=%s, count=%d, weightInGrams=%d", answers.Name, answers.Count, answers.WeightInGrams)
+	cli.Ingredient.Insert(answers.Name, recipeId, answers.Count, answers.WeightInGrams)
 
 	isAddMore := confirm("add more?")
 	if isAddMore {
-		addIngredients()
+		cli.addIngredients(recipeId)
 	}
 
-	return 1
+	return true
 
 }
 
-func mainOptions() string {
+func (cli *CLI) mainOptions() string {
 	choice := ""
 	prompt := &survey.Select{
 		Message: "Choose an option:",
@@ -84,25 +92,27 @@ func mainOptions() string {
 	return choice
 }
 
-func createRecipe() {
+func (cli *CLI) createRecipe() *repo.Recipe {
 	fmt.Println("create a new recipie")
 	recipeName := input("what is the recipe's name?")
+	recipe := cli.Recipe.Insert(recipeName)
 	fmt.Printf("recipe name: %s", recipeName)
+	return recipe
 }
 
-func cli() int {
-	choice := mainOptions()
+func (cli *CLI) Start() bool {
+	choice := cli.mainOptions()
 	switch choice {
 	case CREATE_RECIPE:
-		createRecipe()
-		addIngredients()
-		return cli()
+		recipe := cli.createRecipe()
+		cli.addIngredients(recipe.Id)
+		return cli.Start()
 	case LIST_RECIPIES:
 		fmt.Println("list")
-		return cli()
+		return cli.Start()
 	case EXIT:
-		return 1
+		return true
 	default:
-		return 1
+		return true
 	}
 }
